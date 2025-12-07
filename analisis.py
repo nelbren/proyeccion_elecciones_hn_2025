@@ -9,6 +9,7 @@ Uso:
     python analisis.py              # Genera todos los gráficos
     python analisis.py --stats      # Muestra estadísticas sin gráficos
     python analisis.py --export     # Exporta resumen a CSV
+    python analisis.py --reformat   # Reformatea decimales en CSV histórico
 """
 
 import pandas as pd
@@ -284,12 +285,52 @@ def export_summary(df: pd.DataFrame) -> None:
     print(f"✅ Resumen exportado: {summary_file}")
 
 
+def reformat_csv_decimals() -> None:
+    """Reformatea el CSV histórico para asegurar 2 decimales en porcentajes."""
+    if not os.path.exists(HISTORICAL_FILE):
+        print(f"❌ No se encontró el archivo {HISTORICAL_FILE}")
+        return
+
+    print(f"🔄 Reformateando {HISTORICAL_FILE}...")
+    try:
+        df = pd.read_csv(HISTORICAL_FILE)
+        
+        # Columnas a formatear
+        cols_to_format = ['avg_actas_pct']
+        for col in df.columns:
+            if col.startswith('porcentaje_'):
+                cols_to_format.append(col)
+        
+        # Aplicar formato
+        for col in cols_to_format:
+            if col in df.columns:
+                # Convertir a float primero por si acaso, luego formatear
+                df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
+                df[col] = df[col].apply(lambda x: f"{x:.2f}")
+        
+        # Guardar de nuevo
+        df.to_csv(HISTORICAL_FILE, index=False, encoding='utf-8')
+        print("✅ Archivo reformateado exitosamente con 2 decimales.")
+        
+        # Mostrar primeras filas como verificación
+        print("\nVista previa de las primeras filas:")
+        print(df[cols_to_format].head())
+        
+    except Exception as e:
+        print(f"❌ Error al reformatear: {e}")
+
+
 def main():
     """Función principal del análisis."""
     print("\n" + "="*60)
     print("🗳️  ANÁLISIS ELECTORAL - HONDURAS 2025")
     print("="*60)
     
+    # Verificar argumentos especiales antes de cargar datos
+    if len(sys.argv) > 1 and '--reformat' in sys.argv:
+        reformat_csv_decimals()
+        return
+
     # Cargar datos
     df = load_historical_data()
     if df is None:

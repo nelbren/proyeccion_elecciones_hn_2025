@@ -316,18 +316,18 @@ def save_historical_data(department_data: Dict, projection_df: pd.DataFrame) -> 
             writer.writerow(headers)
         
         # Construir fila de datos usando projection_df
-        row = [timestamp, round(avg_actas, 2)]
+        row = [timestamp, f"{avg_actas:.2f}"]
         for candidate in top_candidates:
             row.extend([
                 candidate.get('Candidate', ''),
                 candidate.get('Current Votes', 0),
                 candidate.get('Projected Votes', 0),
-                candidate.get('Percentage', 0)
+                f"{candidate.get('Percentage', 0):.2f}"
             ])
         
         # Rellenar si hay menos de 3 candidatos
         while len(row) < 14:
-            row.extend(['', 0, 0, 0])
+            row.extend(['', 0, 0, '0.00'])
         
         writer.writerow(row)
     
